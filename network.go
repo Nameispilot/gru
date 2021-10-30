@@ -41,7 +41,7 @@ func MakeNetwork(g *gorgonia.ExprGraph, inputSize, embeddingSize, outputSize, hi
 
 func (n *network) Learnables() gorgonia.Nodes {
 	retVal := make(gorgonia.Nodes, 0)
-	retVal = append(retVal, n.gru.Learnables()...)
+	retVal = append(retVal, n.gru.learnables()...)
 	retVal = append(retVal, n.embedding)
 	retVal = append(retVal, n.whd)
 	retVal = append(retVal, n.bias_d)
@@ -65,7 +65,7 @@ func (n *network) fwd(sourceIdx int, prev *GRUOut) (*GRUOut, error) {
 	if inputVector, err = gorgonia.Slice(n.embedding, gorgonia.S(sourceIdx)); err != nil {
 		return nil, errors.Wrap(err, "Can't slice embedding matrix")
 	}
-	if hidden, err = n.gru.Activate(inputVector, prevState); err != nil {
+	if hidden, err = n.gru.activate(inputVector, prevState); err != nil {
 		return nil, errors.Wrap(err, "Can't activate gru layer")
 	}
 

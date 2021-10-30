@@ -49,7 +49,7 @@ func makeGRU(g *gorgonia.ExprGraph, inputSize, hiddenSize int) GRU {
 	return retVal
 }
 
-func (gru *GRU) Learnables() gorgonia.Nodes {
+func (gru *GRU) learnables() gorgonia.Nodes {
 	return gorgonia.Nodes{
 		gru.u, gru.w, gru.b,
 		gru.uz, gru.wz, gru.bz,
@@ -57,7 +57,7 @@ func (gru *GRU) Learnables() gorgonia.Nodes {
 	}
 }
 
-func (gru *GRU) Activate(input, prev *gorgonia.Node) (*gorgonia.Node, error) {
+func (gru *GRU) activate(input, prev *gorgonia.Node) (*gorgonia.Node, error) {
 	// update gate
 	var uzh, wzh, z *gorgonia.Node
 	var err error
