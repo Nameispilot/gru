@@ -1,6 +1,8 @@
 package gru
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
@@ -9,30 +11,31 @@ import (
 type network struct {
 	gru GRU
 
-	//embedding matrix
+	// embedding matrix
 	embedding *gorgonia.Node
 
-	//decoder
+	// decoder
 	whd    *gorgonia.Node
 	bias_d *gorgonia.Node
 
-	//previous node simulation
+	// previous node simulation
 	prev *gorgonia.Node
 
+	// cost node
 	cost *gorgonia.Node
 }
 
 func MakeNetwork(g *gorgonia.ExprGraph, inputSize, embeddingSize, outputSize, hiddenSize int) *network {
 
 	n := new(network)
-	n.gru = MakeGRU(g, embeddingSize, hiddenSize)
+	n.gru = makeGRU(g, embeddingSize, hiddenSize)
 
 	n.embedding = gorgonia.NewMatrix(g, tensor.Float32, gorgonia.WithShape(inputSize, embeddingSize), gorgonia.WithInit(gorgonia.GlorotN(0.8)), gorgonia.WithName("embedding_"))
 	n.whd = gorgonia.NewMatrix(g, tensor.Float32, gorgonia.WithShape(outputSize, hiddenSize), gorgonia.WithInit(gorgonia.GlorotN(0.8)), gorgonia.WithName("whd_"))
 	n.bias_d = gorgonia.NewVector(g, tensor.Float32, gorgonia.WithShape(outputSize), gorgonia.WithInit(gorgonia.GlorotN(0.08)), gorgonia.WithName("bias_d_"))
 
 	// this is to simulate previous state
-	n.prev = gorgonia.NewVector(g, tensor.Float32, gorgonia.WithShape(hiddenSize))
+	n.prev = gorgonia.NewVector(g, tensor.Float32, gorgonia.WithShape(hiddenSize), gorgonia.WithName("prev_"), gorgonia.WithInit(gorgonia.Zeroes()))
 	return n
 }
 
@@ -85,18 +88,13 @@ func (n *network) fwd(sourceIdx int, prev *GRUOut) (*GRUOut, error) {
 
 }
 
-func (n *network) Fwd(input *gorgonia.Node) error {
+func (n *network) Fwd(input *gorgonia.Node, vocabIndex map[int]int) error {
 	var sentence []int
 	var err error
 	if input.Type().String() == "Vector int" {
 		sentence = input.Value().Data().([]int)
 	} else {
 		return errors.Wrap(err, "Input vector is not' 'Int'")
-	}
-
-	vocabIndex := make(map[int]int)
-	for i, v := range sentence {
-		vocabIndex[v] = i
 	}
 
 	var source, target int
@@ -146,6 +144,59 @@ func costLSTM(prob, cost *gorgonia.Node, targetId int) (*gorgonia.Node, error) {
 	return cost, nil
 }
 
-func (n *network) GetCost() *gorgonia.Node {
-	return n.cost
+func (n *network) GetCost() (*gorgonia.Node, error) {
+	if n.cost != nil {
+		return n.cost, nil
+	} else {
+		return nil, fmt.Errorf("Cost node is nil")
+	}
+}
+
+func (n *network) Predict(g *gorgonia.ExprGraph, input *gorgonia.Node, vocabIndex map[int]int) (int, error) {
+	var sentence []int
+	var err error
+	if input.Type().String() == "Vector int" {
+		sentence = input.Value().Data().([]int)
+	} else {
+		return 0, errors.Wrap(err, "Input vector is not' 'Int'")
+	}
+
+	var id int
+	if len(sentence) > 0 {
+		id = vocabIndex[sentence[len(sentence)-1]]
+	}
+
+	var prev *GRUOut
+	if prev, err = n.fwd(id, prev); err != nil {
+		return 0, errors.Wrap(err, "Can't forward")
+	}
+
+	tm := gorgonia.NewTapeMachine(g)
+	defer tm.Close()
+
+	err = tm.RunAll()
+	if err != nil {
+		return 0, errors.Wrap(err, "Can't run the machine")
+	}
+
+	sampledId := sample(prev.prob.Value())
+
+	return sampledId, nil
+}
+
+func sample(val gorgonia.Value) int {
+
+	var t tensor.Tensor
+	var ok bool
+	if t, ok = val.(tensor.Tensor); !ok {
+		panic("expects a tensor")
+	}
+	indT, err := tensor.Argmax(t, -1)
+	if err != nil {
+		panic(err)
+	}
+	if !indT.IsScalar() {
+		panic("Expected scalar index")
+	}
+	return indT.ScalarValue().(int)
 }

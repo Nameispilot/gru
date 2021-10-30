@@ -25,7 +25,7 @@ type GRU struct {
 	one *gorgonia.Node
 }
 
-func MakeGRU(g *gorgonia.ExprGraph, inputSize, hiddenSize int) GRU {
+func makeGRU(g *gorgonia.ExprGraph, inputSize, hiddenSize int) GRU {
 	retVal := GRU{}
 
 	// weights for memory
