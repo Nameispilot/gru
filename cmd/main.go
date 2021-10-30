@@ -98,6 +98,7 @@ func main() {
 		tm.Reset()
 	}
 
+	fmt.Print("\n---------------TESTING---------------\n\n")
 	//testing
 	var toWords []string
 	for i := 0; i < len(testData); i++ {

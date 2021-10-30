@@ -1,23 +1,26 @@
 Epoch 0:
-	Discriminator's loss: 42.232
+	Discriminator's loss: 41.486
 Epoch 50:
-	Discriminator's loss: 0.057
-Epoch 100:
 	Discriminator's loss: 0.031
+Epoch 100:
+	Discriminator's loss: 0.017
 Epoch 150:
-	Discriminator's loss: 0.021
-Epoch 200:
-	Discriminator's loss: 0.016
-Epoch 250:
 	Discriminator's loss: 0.012
-Epoch 300:
-	Discriminator's loss: 0.010
-Epoch 350:
+Epoch 200:
 	Discriminator's loss: 0.009
-Epoch 400:
-	Discriminator's loss: 0.008
-Epoch 450:
+Epoch 250:
 	Discriminator's loss: 0.007
+Epoch 300:
+	Discriminator's loss: 0.006
+Epoch 350:
+	Discriminator's loss: 0.005
+Epoch 400:
+	Discriminator's loss: 0.005
+Epoch 450:
+	Discriminator's loss: 0.004
+
+---------------TESTING---------------
+
 Sentence: the bartender say to the ... jumper
 Sentence: the jumper ... cables
 Sentence: You better not ... try
